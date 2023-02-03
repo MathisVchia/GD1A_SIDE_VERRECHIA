@@ -1,7 +1,5 @@
 <!doctype html>
 <html lang="en">
-
-
     <head>
         <meta charset="UTF-8" /><title>Mon 1er jeu Phaser</title>
         <script
@@ -17,10 +15,10 @@
             physics: {
                     default: 'arcade',
                     arcade: {
-                    gravity: { y: 250 },
+                    gravity: { y: 150 },
                     debug: false
                     }},
-
+                input:{gamepad:true},
                 scene: {preload: preload, create: create, update: update }
                 };
             
@@ -32,89 +30,99 @@
 
                 // chargement tuiles de jeu
 
+                // Chargement perso
                 this.load.spritesheet('perso','assets/perso.png',
                     { frameWidth: 32, frameHeight: 48 });
 
                 this.load.image("Phaser_tuilesdejeu", "assets/tiles/Vrai_Tileset.png");
-                this.load.image("Background", "assets/tiles/niveau_final_juste_bg.png")
+                this.load.image("Background", "assets/tiles/niveau_final_juste_bg.png");
 
                 // chargement de la carte
                 this.load.tilemapTiledJSON("carte", "assets/premierNiveau.json");
 
-                // generation perso
-            }
+                // chargement vie
+                this.load.image("fullVie", "assets/fullVie.png")
+                this.load.image("fullVie", "assets/midVie.png")
+                this.load.image("fullVie", "assets/emptyVie.png")
+
+                // Chargement Ennemis
+                this.load.image("ennemiFrame1", "assets/ennemiFrame1.png")
+                this.load.image("ennemiFrame2", "assets/ennemiFrame2.png")
 
                 // annonce des variables
                 var platforms;
                 var player;
                 var cursors;
                 var gameOver = false;
+                var controller = false;
 
                  //Variable PowerUp
                 var doublejump = false;
                 var unlockDoubleJump = false;
+
+                var health = 1;
                 
 
+            }
 
 
 
+            var controller = false;
 
 
             function create(){
 
 
 
-
                 //Creation Ennemi Horizontal
-               // bat = this.physics.add.group();
-               // calque_EnnemiHorizontal = Background.getObjectLayer('EnnemiHorizontal');
+                //bat = this.physics.add.group();
+                //calque_EnnemiHorizontal = carteDuNiveau.getObjectLayer('EnnemiHorizontal');
                 //calque_EnnemiHorizontal.objects.forEach( calque_EnnemiHorizontal => {
-                  //  const EnnemiHorizontal = bat.create( calque_EnnemiHorizontal.x + 16, calque_EnnemiHorizontal.y + 16, "TextureBat").body.setAllowGravity(false).setBounce(1);
-               // });
-               // bat.setVelocity(0, 150);
+                    //const EnnemiHorizontal = bat.create( calque_EnnemiHorizontal.x + 16, calque_EnnemiHorizontal.y + 16, "TextureBat").body.setAllowGravity(false).setBounce(1);
+                //});
+                //bat.setVelocity(0, 150);
 
 
                 //Création des Bordures délimitant les déplacements des Ennemis
                 //bordure_ennemi = this.physics.add.group();
-                //calque_BordureEnnemi = Background.getObjectLayer('BordureEnnemi');
+                //calque_BordureEnnemi = carteDuNiveau.getObjectLayer('BordureEnnemi');
                 //calque_BordureEnnemi.objects.forEach( calque_BordureEnnemi => {
-                   // const EBordureEnnemi = bordure_ennemi.create( calque_BordureEnnemi.x + 16, calque_BordureEnnemi.y +16, "TextureBordureEnnemi").body.setAllowGravity(false).setImmovable(true);
+                    //const EBordureEnnemi = bordure_ennemi.create( calque_BordureEnnemi.x + 16, calque_BordureEnnemi.y +16, "TextureBordureEnnemi").body.setAllowGravity(false).setImmovable(true);
                 //});
 
 
                 //Creation PowerUp
-               // item_doublejump = this.physics.add.group();
-              //  calque_ObjetDoubleJump = Background.getObjectLayer('ObjetDoubleJump');
-               // calque_ObjetDoubleJump.objects.forEach( calque_ObjetDoubleJump => {
-              //      const PODoubleJump = item_doublejump.create( calque_ObjetDoubleJump.x + 16, calque_ObjetDoubleJump.y +16, "TextureDoubleJump").body.setAllowGravity(false);
-              //  });
-
-
-
-                // Affiche un texte a l ecran, pour le score
-                scoreText=this.add.text(16,16,'Gemmes Récoltées :',{fontSize:'32px',fill:'#000'});
+                //item_doublejump = this.physics.add.group();
+                //calque_ObjetDoubleJump = carteDuNiveau.getObjectLayer('ObjetDoubleJump');
+                //calque_ObjetDoubleJump.objects.forEach( calque_ObjetDoubleJump => {
+                    //const PODoubleJump = item_doublejump.create( calque_ObjetDoubleJump.x + 16, calque_ObjetDoubleJump.y +16, "TextureDoubleJump").body.setAllowGravity(false);
+                //});
 
 
                 // Creation de la detection du clavier
                 cursors = this.input.keyboard.createCursorKeys();
                 
+                 // Creation detection manette
+                this.input.gamepad.once('connected', function (pad) {
+                    controller = pad;
+                });
 
                 // chargement du background
                 this.add.image(40,30,'Background').setOrigin(0.0249,0.0188);
-                const Background = this.add.tilemap("carte");
+                const carteDuNiveau = this.add.tilemap("carte");
                 
 
-                // chargement du jeu de tuiles
-                const tileset = Background.addTilesetImage(
-                        "Vrai Tileset",
-                        "Phaser_tuilesdejeu"
-                        );  
+        // chargement du jeu de tuiles
+                //const tileset = carteDuNiveau.addTilesetImage(
+                        //"Vrai Tileset",
+                        //"Phaser_tuilesdejeu"
+                       // );  
 
 
                 // chargement du calque calque_plateformes
                 //const calque_plateformes = carteDuNiveau.createLayer(
                         //"Calque de Tuiles 1",
-                       // tileset
+                        //tileset
                        // );  
 
                         
@@ -125,72 +133,88 @@
 
 
 
+                // Limite lvl via dimensions
+                this.physics.world.setBounds(0, 0, 1600, 1600);
+
                 // le perso collide avec les bords du lvl
                 player.setCollideWorldBounds(true);
 
 
                 // Le perso collide avec les platformes
-               // this.physics.add.collider(player, platforms)
+                //this.physics.add.collider(player, platforms)
 
         
-                //Création Barre de vie
-                let healthContainer = this.add.sprite(80, 20, "CadreVie").setScrollFactor(0);
-                let healthBar = this.add.sprite(healthContainer.x, healthContainer.y, "BarreVie").setScrollFactor(0);
-                this.healthMask = this.add.sprite(healthBar.x, healthBar.y, "BarreVie").setScrollFactor(0);
-                this.healthMask.visible = false;
-                healthBar.mask = new Phaser.Display.Masks.BitmapMask(this, this.healthMask);
-
-                //Gestion Caméra
-                this.physics.world.setBounds(0, 0, 1600, 1600);
+        // Gestion Caméra
+                // CAMERA (champs de la caméra de taille identique à celle du niveau)
                 this.cameras.main.setBounds(0, 0, 1600, 1600);
-                this.cameras.main.startFollow(player);  
+        
+                // TAILLE
+                this.cameras.main.setSize(1200, 750);
+
+                // CAMERA sur player
+                this.cameras.main.startFollow(player);        
 
 
+                // Gestion vie
+                lifeUI = this.add.sprite(0,0, "fullVie").setOrigin(0,0).setScrollFactor(0);
 
+        
+        // Call ennemis
+                //récupération
+                //monstresRight = this.physics.add.group(); POUR APPELER LE GROUPE D'OBJET PRESENT DANS TILED
+                //monstresRightLayer = carteDuNiveau.getObjectLayer('monstresRightLayer'); LE NOM DU GROUPE D'OBJET
+                
+                //creation
+                //monstresRightLayer.objects.forEach( monstresRightLayer => { DONNER L'APPARENCE D'ENNEMI A CHAQUE OBJET
+                    //const MmonstresRightLayer = monstresRight.create( monstresRightLayer.x + 16, monstresRightLayer.y + 16, "monsterRightApparence").body.setAllowGravity(false).setBounce(1); DONNER APPARENCE ET CARACTERISTIQUES
+                //});
+                //monstresRight.setVelocity(0, 100);
+
+                // collisions
+                //this.physics.add.overlap(player, monstresRight, toucheMob, null, this); AU CAS OU TU TOUCHE BAH CA APPELLE LA FONCTION TOUCHEMOB QUI RETIRE DES PVS
+                
 
             }
 
 
 
 
+//*********************************************************************************************************
 
 
 
 
-
-
-
-
-
+// FUNCTION UPDATE 
 
         function update(){
 
             //if (gameOver){return;}
 
-            // Comment on bouge
-
-            //if (offTouche == false) {
-
-                
-                if (cursors.left.isDown){ //si la touche gauche est appuyée
+        if (cursors.left.isDown || controller.left){ //si la touche gauche est appuyée
             player.setVelocityX(-220); //alors vitesse négative en X
             player.anims.play('left', true); //et animation => gauche
         }
-        else if (cursors.right.isDown){ //sinon si la touche droite est appuyée
-            player.setVelocityX(220); //alors vitesse positive en X
+        else if (cursors.right.isDown || controller.right){ //sinon si la touche droite est appuyée
+            player.setVelocityX(220); //alors vitesse positive en Xs
             player.anims.play('right', true); //et animation => droite
         }
         else{ // sinon
             player.setVelocityX(0); //vitesse nulle
             player.anims.play('turn'); //animation fait face caméra
         }
-        if (cursors.up.isDown){
+        if (cursors.up.isDown && player.body.blocked.down || controller.up){
             //si touche haut appuyée ET que le perso touche le sol
-            player.setVelocityY(-125); //alors vitesse verticale négative
+            player.setVelocityY(-625); //alors vitesse verticale négative
             //(on saute)
         }
-            
-            
+
+        //double saut
+        //if ( (cursors.up.isDown && doublejump == true && player.body.blocked.none) || (controller.up && doublejump == true && player.body.blocked.none) ) {
+                        //player.setVelocityY(-200);
+                        //doublejump = false;
+                    //}
+                    
+
 
             // Gestion de la mort du personnage
             function mort() {
@@ -202,14 +226,36 @@
 
 
             //Fin fonction update
-           }
+            
+            }
+
+
+//*******************************************************************************************************************************
+
+
+            // Changement du sprite de niveau de vie
+            function gestionLife(){
+
+            if (health == 2){
+                lifeUI.setTexture('fullVie');
+            }
+
+            if (health == 1){
+                lifeUI.setTexture('midVie');
+            }
+
+            if (health == 0){
+                lifeUI.setTexture('emptyVie');
+                killPlayer();
+            }
+
+            }
 
 
 
 
 
+//********************************************************************************************************
         </script>
-
-
     </body>
 </html>
