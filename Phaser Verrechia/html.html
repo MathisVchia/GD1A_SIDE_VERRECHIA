@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+
+
+    <head>
+        <meta charset="UTF-8" /><title>Mon 1er jeu Phaser</title>
+        <script
+            src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+        <style type="text/css"> body { margin: 0; }</style>
+    </head>
+        <body>
+            <script type="text/javascript">            
+
+            var config = {
+            type: Phaser.AUTO,
+            width: 1600, height: 1600,
+            physics: {
+                    default: 'arcade',
+                    arcade: {
+                    gravity: { y: 250 },
+                    debug: false
+                    }},
+
+                scene: {preload: preload, create: create, update: update }
+                };
+            
+
+    new Phaser.Game(config);
+    
+            function preload(){ 
+
+
+                // chargement tuiles de jeu
+
+                this.load.spritesheet('perso','assets/perso.png',
+                    { frameWidth: 32, frameHeight: 48 });
+
+                this.load.image("Phaser_tuilesdejeu", "assets/tiles/Vrai_Tileset.png");
+                this.load.image("Background", "assets/tiles/niveau_final_juste_bg.png")
+
+                // chargement de la carte
+                this.load.tilemapTiledJSON("carte", "assets/premierNiveau.json");
+
+                // generation perso
+            }
+
+                // annonce des variables
+                var platforms;
+                var player;
+                var cursors;
+                var gameOver = false;
+
+                 //Variable PowerUp
+                var doublejump = false;
+                var unlockDoubleJump = false;
+                
+
+
+
+
+
+
+            function create(){
+
+
+
+
+                //Creation Ennemi Horizontal
+               // bat = this.physics.add.group();
+               // calque_EnnemiHorizontal = Background.getObjectLayer('EnnemiHorizontal');
+                //calque_EnnemiHorizontal.objects.forEach( calque_EnnemiHorizontal => {
+                  //  const EnnemiHorizontal = bat.create( calque_EnnemiHorizontal.x + 16, calque_EnnemiHorizontal.y + 16, "TextureBat").body.setAllowGravity(false).setBounce(1);
+               // });
+               // bat.setVelocity(0, 150);
+
+
+                //Création des Bordures délimitant les déplacements des Ennemis
+                //bordure_ennemi = this.physics.add.group();
+                //calque_BordureEnnemi = Background.getObjectLayer('BordureEnnemi');
+                //calque_BordureEnnemi.objects.forEach( calque_BordureEnnemi => {
+                   // const EBordureEnnemi = bordure_ennemi.create( calque_BordureEnnemi.x + 16, calque_BordureEnnemi.y +16, "TextureBordureEnnemi").body.setAllowGravity(false).setImmovable(true);
+                //});
+
+
+                //Creation PowerUp
+               // item_doublejump = this.physics.add.group();
+              //  calque_ObjetDoubleJump = Background.getObjectLayer('ObjetDoubleJump');
+               // calque_ObjetDoubleJump.objects.forEach( calque_ObjetDoubleJump => {
+              //      const PODoubleJump = item_doublejump.create( calque_ObjetDoubleJump.x + 16, calque_ObjetDoubleJump.y +16, "TextureDoubleJump").body.setAllowGravity(false);
+              //  });
+
+
+
+                // Affiche un texte a l ecran, pour le score
+                scoreText=this.add.text(16,16,'Gemmes Récoltées :',{fontSize:'32px',fill:'#000'});
+
+
+                // Creation de la detection du clavier
+                cursors = this.input.keyboard.createCursorKeys();
+                
+
+                // chargement du background
+                this.add.image(40,30,'Background').setOrigin(0.0249,0.0188);
+                const Background = this.add.tilemap("carte");
+                
+
+                // chargement du jeu de tuiles
+                const tileset = Background.addTilesetImage(
+                        "Vrai Tileset",
+                        "Phaser_tuilesdejeu"
+                        );  
+
+
+                // chargement du calque calque_plateformes
+                //const calque_plateformes = carteDuNiveau.createLayer(
+                        //"Calque de Tuiles 1",
+                       // tileset
+                       // );  
+
+                        
+                    
+                // Creation du joueur
+                player = this.physics.add.sprite(100, 450, 'perso');
+                    player.setBounce(0.2)
+
+
+
+                // le perso collide avec les bords du lvl
+                player.setCollideWorldBounds(true);
+
+
+                // Le perso collide avec les platformes
+               // this.physics.add.collider(player, platforms)
+
+        
+                //Création Barre de vie
+                let healthContainer = this.add.sprite(80, 20, "CadreVie").setScrollFactor(0);
+                let healthBar = this.add.sprite(healthContainer.x, healthContainer.y, "BarreVie").setScrollFactor(0);
+                this.healthMask = this.add.sprite(healthBar.x, healthBar.y, "BarreVie").setScrollFactor(0);
+                this.healthMask.visible = false;
+                healthBar.mask = new Phaser.Display.Masks.BitmapMask(this, this.healthMask);
+
+                //Gestion Caméra
+                this.physics.world.setBounds(0, 0, 1600, 1600);
+                this.cameras.main.setBounds(0, 0, 1600, 1600);
+                this.cameras.main.startFollow(player);  
+
+
+
+
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        function update(){
+
+            //if (gameOver){return;}
+
+            // Comment on bouge
+
+            //if (offTouche == false) {
+
+                
+                if (cursors.left.isDown){ //si la touche gauche est appuyée
+            player.setVelocityX(-220); //alors vitesse négative en X
+            player.anims.play('left', true); //et animation => gauche
+        }
+        else if (cursors.right.isDown){ //sinon si la touche droite est appuyée
+            player.setVelocityX(220); //alors vitesse positive en X
+            player.anims.play('right', true); //et animation => droite
+        }
+        else{ // sinon
+            player.setVelocityX(0); //vitesse nulle
+            player.anims.play('turn'); //animation fait face caméra
+        }
+        if (cursors.up.isDown){
+            //si touche haut appuyée ET que le perso touche le sol
+            player.setVelocityY(-125); //alors vitesse verticale négative
+            //(on saute)
+        }
+            
+            
+
+            // Gestion de la mort du personnage
+            function mort() {
+                console.log("mort");
+                this.physics.pause();
+                player.setTint(0xff0000);
+                player.anims.play('turn');
+                }
+
+
+            //Fin fonction update
+           }
+
+
+
+
+
+        </script>
+
+
+    </body>
+</html>
