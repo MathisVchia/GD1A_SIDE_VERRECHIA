@@ -24,33 +24,10 @@
             
 
     new Phaser.Game(config);
-    
-            function preload(){ 
 
 
-                // chargement tuiles de jeu
-
-                // Chargement perso
-                this.load.spritesheet('perso','assets/perso.png',
-                    { frameWidth: 32, frameHeight: 48 });
-
-                this.load.image("Phaser_tuilesdejeu", "assets/tiles/Vrai_Tileset.png");
-                this.load.image("Background", "assets/tiles/niveau_final_juste_bg.png");
-
-                // chargement de la carte
-                this.load.tilemapTiledJSON("carte", "assets/premierNiveau.json");
-
-                // chargement vie
-                this.load.image("fullVie", "assets/fullVie.png")
-                this.load.image("fullVie", "assets/midVie.png")
-                this.load.image("fullVie", "assets/emptyVie.png")
-
-                // Chargement Ennemis
-                this.load.image("ennemiFrame1", "assets/ennemiFrame1.png")
-                this.load.image("ennemiFrame2", "assets/ennemiFrame2.png")
-
-                // annonce des variables
-                var platforms;
+     // annonce des variables
+                 var platforms;
                 var player;
                 var cursors;
                 var gameOver = false;
@@ -62,12 +39,40 @@
 
                 var health = 1;
                 
+    
+            function preload(){ 
+
+
+                // chargement tuiles de jeu
+
+                // Chargement perso
+                this.load.spritesheet('perso','assets/perso.png',
+                    { frameWidth: 32, frameHeight: 48 });
+
+                this.load.image("Phaser_tuilesdejeu", "assets/tiles/TILESET.png");
+                this.load.image("Background", "assets/tiles/NOUVEAU_niveau_final_juste_bg.png");
+                console.log("chargement ok");
+
+                // chargement de la carte
+                this.load.tilemapTiledJSON("carte", "assets/Tiled_pour_Phaser_final.json");
+
+                // chargement vie
+                this.load.image("fullVie", "assets/fullVie.png")
+                this.load.image("midVie", "assets/midVie.png")
+                this.load.image("emptyVie", "assets/emptyVie.png")
+
+                // Chargement Ennemis
+                this.load.image("ennemiFrame1", "assets/ennemiFrame1.png")
+                this.load.image("ennemiFrame2", "assets/ennemiFrame2.png")
+
+                // Chargement objets
+                this.load.image("bloc destructible", "assets/Bloc destructible.png")
+                this.load.image("eau", "assets/Eau.png")
+                this.load.image("gemme", "assets/Gemme.png")
+                this.load.image("pic", "assets/Pic.png")
 
             }
 
-
-
-            var controller = false;
 
 
             function create(){
@@ -108,22 +113,22 @@
                 });
 
                 // chargement du background
-                this.add.image(40,30,'Background').setOrigin(0.0249,0.0188);
+                this.add.image(40,30,'Background').setOrigin(0.0249,0.0188);                
+
+                //*************************************************************________________________________________________________
+                // MAP DE TILED
+                // TILEMAP    
                 const carteDuNiveau = this.add.tilemap("carte");
-                
 
-        // chargement du jeu de tuiles
-                //const tileset = carteDuNiveau.addTilesetImage(
-                        //"Vrai Tileset",
-                        //"Phaser_tuilesdejeu"
-                       // );  
+                // TILESET
+                 const tileset = carteDuNiveau.addTilesetImage("tuiles_de_jeu","Phaser_tuilesdejeu",);
 
+                    // PLATEFORMES NORMALES []
+                    const plateformes = carteDuNiveau.createLayer("plateformes",tileset);
 
-                // chargement du calque calque_plateformes
-                //const calque_plateformes = carteDuNiveau.createLayer(
-                        //"Calque de Tuiles 1",
-                        //tileset
-                       // );  
+                    // collisions
+                    //plateformes.setCollisionByProperty({estSolide: true });
+                    //this.physics.add.collider(player, plateformes, normalPlatsProperties, null, this);
 
                         
                     
