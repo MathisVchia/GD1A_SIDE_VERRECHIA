@@ -15,7 +15,7 @@
             physics: {
                     default: 'arcade',
                     arcade: {
-                    gravity: { y: 150 },
+                    gravity: { y: 800 },
                     debug: false
                     }},
                 input:{gamepad:true},
@@ -27,7 +27,7 @@
 
 
      // annonce des variables
-                 var platforms;
+                var platforms;
                 var player;
                 var cursors;
                 var gameOver = false;
@@ -35,13 +35,71 @@
 
                  //Variable PowerUp
                 var doublejump = false;
-                var unlockDoubleJump = false;
+                var wallJumpLocked = false;
+                var commandesLocked = false;
 
-                var health = 1;
+                var health = 2;
+                var ennemi;
+                var distance = 100;
+                var speed = 100;
+
+
+        // Decla de fonctions
                 
-    
-            function preload(){ 
+                function unlockCommandes(){
+                    commandesLocked = false;
+                }
 
+
+
+
+
+        // ANIMATION - FRAME D'INVINCIBILITE (PART 1 - INVISIBLE)
+        function playerInvisible() {
+            player.visible = false;
+            setTimeout(playerVisible, 100);
+        }
+
+        // ANIMATION - FRAME D'INVINCIBILITE (PART 2 - VISIBLE)
+        function playerVisible() {
+            if (frameInvincible < 3) {
+                console.log("visible");
+                player.visible = true;
+                setTimeout(playerInvisible, 100);   
+                frameInvincible += 1;
+            }
+            else {
+                player.visible = true;
+                frameInvincible = 0;
+            }
+        }
+
+        
+// LA BAGARRE
+
+                    function toucheMobGauche(player, ennemi) {
+                               
+                if (player.body.touching.down){
+                    ennemi.disableBody(true, true);
+                    player.setVelocityY(-210);
+                }
+
+            // CONTACT AVEC UN MOB
+            function toucheMobDroite(player, ennemi) {
+                if(player.body.touching.right || player.body.touching.left || player.body.touching.up){
+
+                        health -= 1;
+                        gestionLife();
+
+                    }
+                }
+            }
+
+
+
+
+
+            function preload(){ 
 
                 // chargement tuiles de jeu
 
@@ -79,33 +137,10 @@
 
 
 
-                //Creation Ennemi Horizontal
-                //bat = this.physics.add.group();
-                //calque_EnnemiHorizontal = carteDuNiveau.getObjectLayer('EnnemiHorizontal');
-                //calque_EnnemiHorizontal.objects.forEach( calque_EnnemiHorizontal => {
-                    //const EnnemiHorizontal = bat.create( calque_EnnemiHorizontal.x + 16, calque_EnnemiHorizontal.y + 16, "TextureBat").body.setAllowGravity(false).setBounce(1);
-                //});
-                //bat.setVelocity(0, 150);
-
-
-                //Création des Bordures délimitant les déplacements des Ennemis
-                //bordure_ennemi = this.physics.add.group();
-                //calque_BordureEnnemi = carteDuNiveau.getObjectLayer('BordureEnnemi');
-                //calque_BordureEnnemi.objects.forEach( calque_BordureEnnemi => {
-                    //const EBordureEnnemi = bordure_ennemi.create( calque_BordureEnnemi.x + 16, calque_BordureEnnemi.y +16, "TextureBordureEnnemi").body.setAllowGravity(false).setImmovable(true);
-                //});
-
-
-                //Creation PowerUp
-                //item_doublejump = this.physics.add.group();
-                //calque_ObjetDoubleJump = carteDuNiveau.getObjectLayer('ObjetDoubleJump');
-                //calque_ObjetDoubleJump.objects.forEach( calque_ObjetDoubleJump => {
-                    //const PODoubleJump = item_doublejump.create( calque_ObjetDoubleJump.x + 16, calque_ObjetDoubleJump.y +16, "TextureDoubleJump").body.setAllowGravity(false);
-                //});
-
-
+            
                 // Creation de la detection du clavier
                 cursors = this.input.keyboard.createCursorKeys();
+                keyWallGrap = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
                 
                  // Creation detection manette
                 this.input.gamepad.once('connected', function (pad) {
@@ -113,30 +148,55 @@
                 });
 
                 // chargement du background
-                this.add.image(40,30,'Background').setOrigin(0.0249,0.0188);                
+                this.add.image(40,30,'Background').setOrigin(0.0249,0.0188);   
+                
+                
 
-                //*************************************************************________________________________________________________
+
+                //*************************************************************
+
+
+
+
                 // MAP DE TILED
+
+
                 // TILEMAP    
                 const carteDuNiveau = this.add.tilemap("carte");
 
                 // TILESET
-                 const tileset = carteDuNiveau.addTilesetImage("tuiles_de_jeu","Phaser_tuilesdejeu",);
+                 const tileset = carteDuNiveau.addTilesetImage("TILESET","Phaser_tuilesdejeu");
 
-                    // PLATEFORMES NORMALES []
-                    const plateformes = carteDuNiveau.createLayer("plateformes",tileset);
+                    // PLATEFORMES NORMALES
+                    const plateformes = carteDuNiveau.createLayer("Plateformes",tileset);
 
-                    // collisions
-                    //plateformes.setCollisionByProperty({estSolide: true });
-                    //this.physics.add.collider(player, plateformes, normalPlatsProperties, null, this);
+                    // Collectables
+                    const collectables = carteDuNiveau.getObjectLayer("Collectables", tileset);
+
+
 
                         
                     
                 // Creation du joueur
-                player = this.physics.add.sprite(100, 450, 'perso');
+                player = this.physics.add.sprite(45, 30, 'perso');
                     player.setBounce(0.2)
+                ennemi = this.physics.add.sprite(80, 30, 'EnnemiFrame2');
+
+                //Hitbox
+                customPlayerBound = player.body.setBoundsRectangle((0,0,player.body.height,player.body.halfHeight));
+                //customPlayerBound = player.body.setBoundsRectangle((0,0,1600,1600));
+                console.log(customPlayerBound);
 
 
+                // collisions plateformes
+                plateformes.setCollisionByProperty({estSolide: true });
+                this.physics.add.collider(player, plateformes);
+                this.physics.add.collider(ennemi, plateformes);
+                
+                this.physics.add.overlap(player, ennemi, toucheMobGauche);
+
+                // collisions  gemmes
+                this.physics.add.collider(player, collectables);
 
                 // Limite lvl via dimensions
                 this.physics.world.setBounds(0, 0, 1600, 1600);
@@ -145,16 +205,18 @@
                 player.setCollideWorldBounds(true);
 
 
-                // Le perso collide avec les platformes
-                //this.physics.add.collider(player, platforms)
+
+
 
         
         // Gestion Caméra
+
+
                 // CAMERA (champs de la caméra de taille identique à celle du niveau)
                 this.cameras.main.setBounds(0, 0, 1600, 1600);
         
                 // TAILLE
-                this.cameras.main.setSize(1200, 750);
+                this.cameras.main.setSize(900, 600);
 
                 // CAMERA sur player
                 this.cameras.main.startFollow(player);        
@@ -163,8 +225,12 @@
                 // Gestion vie
                 lifeUI = this.add.sprite(0,0, "fullVie").setOrigin(0,0).setScrollFactor(0);
 
+
+
+
         
-        // Call ennemis
+        // Call ennemis test 1   RECUPEREE SUR UN GITHUB / PAS FAN
+
                 //récupération
                 //monstresRight = this.physics.add.group(); POUR APPELER LE GROUPE D'OBJET PRESENT DANS TILED
                 //monstresRightLayer = carteDuNiveau.getObjectLayer('monstresRightLayer'); LE NOM DU GROUPE D'OBJET
@@ -176,9 +242,58 @@
                 //monstresRight.setVelocity(0, 100);
 
                 // collisions
-                //this.physics.add.overlap(player, monstresRight, toucheMob, null, this); AU CAS OU TU TOUCHE BAH CA APPELLE LA FONCTION TOUCHEMOB QUI RETIRE DES PVS
+                //this.physics.add.overlap(player, monstresRight, toucheMob, null, this); 
+
+
+
+
+
+                // Call ennemi test 2 NE VEUT PAS CAR CHAUVE_SOURIS.CREATE N EST PAS UNE FONCTION ?
+
+
+
+                //chauve_souris = this.physics.add.sprite(100,100);
+                //calque_EnnemiHorizontal = carteDuNiveau.getObjectLayer('Ennemis');
+                //calque_EnnemiHorizontal.objects.forEach( calque_EnnemiHorizontal => {
+                    //const EEnnemiHorizontal = chauve_souris.create( calque_EnnemiHorizontal.x + 16, calque_EnnemiHorizontal.y + 16, "EnnemiFrame2").body.setAllowGravity(false).setBounce(1);
+                //});
+                //chauve_souris.setVelocityX(speed);
+                
                 
 
+
+
+                // Animation du Personnage
+                this.anims.create({
+                        key: 'left',
+                        frames: this.anims.generateFrameNumbers('perso', {start:1,end:2}),
+                        frameRate: 10,
+                        repeat: -1
+                    });
+
+                    this.anims.create({
+                        key: 'turn',
+                        frames: [ { key: 'perso', frame: 4 } ],
+                        frameRate: 20
+                    });
+
+                    this.anims.create({
+                        key: 'right',
+                        frames: this.anims.generateFrameNumbers('perso', {start:6,end:7}),
+                        frameRate: 10,
+                        repeat: -1
+                    });
+
+
+
+
+            /*gemme = this.physics.add.group();
+            collectables = carteDuNiveau.getObjectLayer('Collectables');
+            collectables.objects.forEach(eachCoin => {
+                const piece = coin.create(eachCoin.x+16,  eachCoin.y-16, "Gemme").body.setAllowGravity(false);
+            });
+            this.physics.add.overlap(player,gemme);
+*/
             }
 
 
@@ -209,31 +324,115 @@
         }
         if (cursors.up.isDown && player.body.blocked.down || controller.up){
             //si touche haut appuyée ET que le perso touche le sol
-            player.setVelocityY(-625); //alors vitesse verticale négative
+            player.setVelocityY(-405); //alors vitesse verticale négative
             //(on saute)
         }
 
-        //double saut
-        //if ( (cursors.up.isDown && doublejump == true && player.body.blocked.none) || (controller.up && doublejump == true && player.body.blocked.none) ) {
+        //double saut mais tu peux le faire en boucle du coup tu voles
+        //if ( (cursors.up.isDown && player.body.blocked.none) || (controller.up && player.body.blocked.none) ) {
                         //player.setVelocityY(-200);
-                        //doublejump = false;
-                    //}
+        //}
                     
 
 
-            // Gestion de la mort du personnage
-            function mort() {
-                console.log("mort");
-                this.physics.pause();
-                player.setTint(0xff0000);
-                player.anims.play('turn');
-                }
+
+
+                //Grimpe !
+                if (cursors.up.isDown && player.body.blocked.right || controller.up && player.body.blocked.right) {
+                                            player.setVelocityY(-200);
+                                            player.setVelocityX(50);
+
+                                    }
+                else if (cursors.up.isDown && player.body.blocked.left|| controller.up && player.body.blocked.left) {
+                                            player.setVelocityY(-200);
+                                            player.setVelocityX(50);
+                    }
+
+
+
+
+
+
+
+
+            // Walljump IL FAUT MAINTENIR SHIFT / REGARDER DANS LA DIRECTION SOUHAITEE ET RAPPUYER SUR UP
+
+            
+            // WALL JUMP GAUCHE
+            if(player.body.blocked.left && (keyWallGrap.isDown || controller.R2 || controller.L2) && wallJumpLocked == false){
+                player.setVelocityY(-12);
+                player.setVelocityX(-2);
+            }
+
+            if (player.body.blocked.left && (cursors.up.isDown || controller.up || controller.A)){ // on se repousse du mur
+               
+                player.setAccelerationX(4000);
+                player.setMaxVelocity(1000);
+                player.setVelocityY(-200);
+            }
+            // commandes débloquées
+            setTimeout(function() {
+                unlockCommandes();
+                player.setAccelerationX(0);                
+                }, 2000);
+
+
+
+            // WALL JUMP DROIT
+            if(player.body.blocked.right && (keyWallGrap.isDown || controller.R2 || controller.L2) && wallJumpLocked == false){
+                player.setVelocityY(-12);
+                player.setVelocityX(2);
+            }
+
+            if (player.body.blocked.right && (cursors.up.isDown || controller.up || controller.A)){ // on se repousse du mur
+                
+                player.setAccelerationX(-4000);
+                player.setMaxVelocity(1000);
+                player.setVelocityY(-200);
+
+            }
+            // commandes débloquées
+            setTimeout(function() {
+                unlockCommandes();
+                player.setAccelerationX(0);                
+                }, 2000);
+
+
+
+
+                        // Gestion de la mort du personnage
+                        function mort() {
+                            console.log("mort");
+                            this.physics.pause();
+                            player.setTint(0xff0000);
+                            //player.anims.play('turn');
+
+                            }
+
+
+
+
+
+/*NE MARCHERA QUE QUAND APPARATION ENNEMI SERA OP  
+// Deplacement ennemis
+if (enemy.x >= 100 + distance) {
+    enemy.setVelocityX(-speed);
+  } else if (enemy.x <= 100) {
+    enemy.setVelocityX(speed);
+  }
+  */
+
+
+
+
+
+
+
 
 
             //Fin fonction update
             
-            }
-
+        }
 
 //*******************************************************************************************************************************
 
@@ -251,7 +450,6 @@
 
             if (health == 0){
                 lifeUI.setTexture('emptyVie');
-                killPlayer();
             }
 
             }
